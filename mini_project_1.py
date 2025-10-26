@@ -1,0 +1,68 @@
+import torch
+import torch.nn as nn
+from torch.utils.data import DataLoader
+from torchvision import datasets,transforms,models
+from torchvision.models import ResNet18_Weights
+import os
+
+
+if __name__ == "__main__":
+    # Data transformations
+    data_transforms = {
+        'train': transforms.Compose([
+            transforms.RandomResizedCrop(224),
+            transforms.RandomHorizontalFlip(),
+            transforms.ToTensor(),
+            transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
+        ]),
+        'val': transforms.Compose([
+            transforms.Resize(256),
+            transforms.CenterCrop(224),
+            transforms.ToTensor(),
+            transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
+        ]),
+    }
+
+    # Loading datasets
+    data_dir = 'dataset'
+    image_datasets = {x: datasets.ImageFolder(os.path.join(data_dir, x), data_transforms[x]) for x in ['train', 'val']}
+
+    # Creating batches
+    dataloaders = {x: DataLoader(image_datasets[x], batch_size=4, shuffle=True, num_workers=4) for x in ['train', 'val']}
+
+    # Dataset sizes
+    dataset_sizes = {x: len(image_datasets[x]) for x in ['train', 'val']}
+    class_names = image_datasets['train'].classes
+
+# Checking to see if everything is set up correctly
+
+    # print(f"Classes found: {class_names}")
+    # print(f"Training images: {dataset_sizes['train']}, Validation images: {dataset_sizes['val']}")
+
+    device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+    # print(f"Using device: {device}")
+
+    inputs, classes = next(iter(dataloaders['train']))
+
+    # print(f"Batch shape (Input): {inputs.shape}")
+    # print(f"Batch shape (Classes): {classes.shape}") 
+    # print(f"Class labels for this batch: {classes}")
+
+# Building a baseline model
+    model = models.resnet18(weights=ResNet18_Weights.DEFAULT)
+
+    for param in model.parameters():
+        param.requires_grad = False
+
+    num_ftrs = model.fc.in_features
+
+    model.fc = nn.Linear(num_ftrs, len(class_names))
+
+    for name, param in model.named_parameters():
+        if param.requires_grad:
+            print(f"Training param: {name}")
+
+    model = model.to(device)
+
+
+  
