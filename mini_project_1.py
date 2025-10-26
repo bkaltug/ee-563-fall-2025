@@ -138,7 +138,7 @@ if __name__ == "__main__":
     # print(f"Class labels for this batch: {classes}")
 
 # Building a baseline model
-    model = models.resnet34(weights=ResNet34_Weights.DEFAULT)
+    model = models.resnet50(weights=ResNet50_Weights.DEFAULT)
 
     for param in model.parameters():
         param.requires_grad = False
@@ -161,10 +161,10 @@ if __name__ == "__main__":
 
     print("Starting baseline model training...")
     # Call the function to start training
-    trained_model_34, baseline_history_34 = train_model(model, dataloaders, criterion, optimizer, device, num_epochs=25)
-    torch.save(  baseline_history_34, 'results/history_resnet34.pth')
+    trained_model_50, baseline_history_50 = train_model(model, dataloaders, criterion, optimizer, device, num_epochs=25)
+    torch.save(baseline_history_50, 'results/history_resnet50.pth')
 
     print("Baseline training finished.")
-    print(  baseline_history_34['val_acc'])
+    print(baseline_history_50['val_acc'])
 
   
