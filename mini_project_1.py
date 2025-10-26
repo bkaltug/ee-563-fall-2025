@@ -1,9 +1,96 @@
+import os
+import time
+import copy
 import torch
 import torch.nn as nn
+import torch.optim as optim
 from torch.utils.data import DataLoader
 from torchvision import datasets,transforms,models
 from torchvision.models import ResNet18_Weights
-import os
+
+def train_model(model, dataloaders, criterion, optimizer, device, num_epochs=25):
+    
+    start_time = time.time()
+
+    # Keeping track of the best model's weights
+    best_model_wts = copy.deepcopy(model.state_dict())
+    best_acc = 0.0
+
+    # Storing loss and accuracy
+    history = {
+        'train_loss': [], 'train_acc': [],
+        'val_loss': [], 'val_acc': []
+    }
+
+    for epoch in range(num_epochs):
+        print(f'Epoch {epoch}/{num_epochs - 1}')
+        print('-' * 10)
+
+
+        for phase in ['train', 'val']:
+            if phase == 'train':
+                model.train()  # Set model to training mode
+            else:
+                model.eval()   # Set model to evaluate mode
+
+            running_loss = 0.0
+            running_corrects = 0
+
+            # Get the total number of images in this phase
+            dataset_size = len(dataloaders[phase].dataset)
+
+            # Iterate over data.
+            for inputs, labels in dataloaders[phase]:
+                inputs = inputs.to(device)
+                labels = labels.to(device)
+
+                # Reset the gradients
+                optimizer.zero_grad()
+
+                # Forward pass
+                with torch.set_grad_enabled(phase == 'train'):
+                    outputs = model(inputs)
+                    _, preds = torch.max(outputs, 1) # Get the class prediction
+                    loss = criterion(outputs, labels)
+
+                    # Backward pass & optimizing
+                    if phase == 'train':
+                        loss.backward()
+                        optimizer.step()
+
+                
+                running_loss += loss.item() * inputs.size(0)
+                running_corrects += torch.sum(preds == labels.data)
+
+            # Calculating epoch loss and accuracy
+            epoch_loss = running_loss / dataset_size
+            epoch_acc = running_corrects.double() / dataset_size
+
+            print(f'{phase} Loss: {epoch_loss:.4f} Acc: {epoch_acc:.4f}')
+
+            
+            if phase == 'train':
+                history['train_loss'].append(epoch_loss)
+                history['train_acc'].append(epoch_acc.item()) # .item() to get Python number
+            else:
+                history['val_loss'].append(epoch_loss)
+                history['val_acc'].append(epoch_acc.item())
+
+            # Save the best model
+            if phase == 'val' and epoch_acc > best_acc:
+                best_acc = epoch_acc
+                best_model_wts = copy.deepcopy(model.state_dict())
+
+        print()
+
+    time_elapsed = time.time() - start_time
+    print(f'Training complete in {time_elapsed // 60:.0f}m {time_elapsed % 60:.0f}s')
+    print(f'Best val Acc: {best_acc:4f}')
+
+    # load best model weights
+    model.load_state_dict(best_model_wts)
+    return model, history
+
 
 
 if __name__ == "__main__":
@@ -64,5 +151,17 @@ if __name__ == "__main__":
 
     model = model.to(device)
 
+# Training the model
+
+    criterion = nn.CrossEntropyLoss()
+    optimizer = optim.SGD(model.parameters(), lr=0.001, momentum=0.95)
+
+    print("Starting baseline model training...")
+    # Call the function to start training
+    trained_model_8, baseline_history_8 = train_model(model, dataloaders, criterion, optimizer, device, num_epochs=25)
+    torch.save(  baseline_history_8, 'results/history_resnet18_lr0001_mom095.pth')
+
+    print("Baseline training finished.")
+    print(  baseline_history_8['val_acc'])
 
   
