@@ -96,21 +96,33 @@ def train_model(model, dataloaders, criterion, optimizer, device, num_epochs=25)
 
 
 if __name__ == "__main__":
+
+    minimal_transforms = transforms.Compose([
+    transforms.Resize(256),
+    transforms.CenterCrop(224),
+    transforms.ToTensor(),
+    transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
+])
     # Data transformations
+
     data_transforms = {
-        'train': transforms.Compose([
-            transforms.RandomResizedCrop(224),
-            transforms.RandomHorizontalFlip(),
-            transforms.ToTensor(),
-            transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
-        ]),
-        'val': transforms.Compose([
-            transforms.Resize(256),
-            transforms.CenterCrop(224),
-            transforms.ToTensor(),
-            transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
-        ]),
-    }
+    'train': minimal_transforms,
+    'val': minimal_transforms
+}
+    # data_transforms = {
+    #     'train': transforms.Compose([
+    #         transforms.RandomResizedCrop(224),
+    #         transforms.RandomHorizontalFlip(),
+    #         transforms.ToTensor(),
+    #         transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
+    #     ]),
+    #     'val': transforms.Compose([
+    #         transforms.Resize(256),
+    #         transforms.CenterCrop(224),
+    #         transforms.ToTensor(),
+    #         transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
+    #     ]),
+    # }
 
     # Loading datasets
     data_dir = 'dataset'
@@ -138,7 +150,7 @@ if __name__ == "__main__":
     # print(f"Class labels for this batch: {classes}")
 
 # Building a baseline model
-    model = models.resnet50(weights=ResNet50_Weights.DEFAULT)
+    model = models.resnet18(weights=ResNet18_Weights.DEFAULT)
 
     for param in model.parameters():
         param.requires_grad = False
@@ -161,10 +173,10 @@ if __name__ == "__main__":
 
     print("Starting baseline model training...")
     # Call the function to start training
-    trained_model_50, baseline_history_50 = train_model(model, dataloaders, criterion, optimizer, device, num_epochs=25)
-    torch.save(baseline_history_50, 'results/history_resnet50.pth')
+    trained_model_18, baseline_history_18 = train_model(model, dataloaders, criterion, optimizer, device, num_epochs=25)
+    torch.save(baseline_history_18, 'results/history_resnet18_no_augment.pth')
 
     print("Baseline training finished.")
-    print(baseline_history_50['val_acc'])
+    print(baseline_history_18['val_acc'])
 
   
