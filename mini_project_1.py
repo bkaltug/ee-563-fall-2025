@@ -7,6 +7,8 @@ import torch.optim as optim
 from torch.utils.data import DataLoader
 from torchvision import datasets,transforms,models
 from torchvision.models import ResNet18_Weights
+from torchvision.models import ResNet34_Weights
+from torchvision.models import ResNet50_Weights
 
 def train_model(model, dataloaders, criterion, optimizer, device, num_epochs=25):
     
@@ -136,7 +138,7 @@ if __name__ == "__main__":
     # print(f"Class labels for this batch: {classes}")
 
 # Building a baseline model
-    model = models.resnet18(weights=ResNet18_Weights.DEFAULT)
+    model = models.resnet34(weights=ResNet34_Weights.DEFAULT)
 
     for param in model.parameters():
         param.requires_grad = False
@@ -154,14 +156,15 @@ if __name__ == "__main__":
 # Training the model
 
     criterion = nn.CrossEntropyLoss()
-    optimizer = optim.SGD(model.parameters(), lr=0.001, momentum=0.95)
+    # Picked the most accurate values after testing
+    optimizer = optim.SGD(model.parameters(), lr=0.0001, momentum=0.9)
 
     print("Starting baseline model training...")
     # Call the function to start training
-    trained_model_8, baseline_history_8 = train_model(model, dataloaders, criterion, optimizer, device, num_epochs=25)
-    torch.save(  baseline_history_8, 'results/history_resnet18_lr0001_mom095.pth')
+    trained_model_34, baseline_history_34 = train_model(model, dataloaders, criterion, optimizer, device, num_epochs=25)
+    torch.save(  baseline_history_34, 'results/history_resnet34.pth')
 
     print("Baseline training finished.")
-    print(  baseline_history_8['val_acc'])
+    print(  baseline_history_34['val_acc'])
 
   
