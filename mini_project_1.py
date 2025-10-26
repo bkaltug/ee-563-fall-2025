@@ -97,32 +97,32 @@ def train_model(model, dataloaders, criterion, optimizer, device, num_epochs=25)
 
 if __name__ == "__main__":
 
-    minimal_transforms = transforms.Compose([
-    transforms.Resize(256),
-    transforms.CenterCrop(224),
-    transforms.ToTensor(),
-    transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
-])
-    # Data transformations
+#     minimal_transforms = transforms.Compose([
+#     transforms.Resize(256),
+#     transforms.CenterCrop(224),
+#     transforms.ToTensor(),
+#     transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
+# ])
+#     # Data transformations
 
+#     data_transforms = {
+#     'train': minimal_transforms,
+#     'val': minimal_transforms
+# }
     data_transforms = {
-    'train': minimal_transforms,
-    'val': minimal_transforms
-}
-    # data_transforms = {
-    #     'train': transforms.Compose([
-    #         transforms.RandomResizedCrop(224),
-    #         transforms.RandomHorizontalFlip(),
-    #         transforms.ToTensor(),
-    #         transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
-    #     ]),
-    #     'val': transforms.Compose([
-    #         transforms.Resize(256),
-    #         transforms.CenterCrop(224),
-    #         transforms.ToTensor(),
-    #         transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
-    #     ]),
-    # }
+        'train': transforms.Compose([
+            transforms.RandomResizedCrop(224),
+            transforms.RandomHorizontalFlip(),
+            transforms.ToTensor(),
+            transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
+        ]),
+        'val': transforms.Compose([
+            transforms.Resize(256),
+            transforms.CenterCrop(224),
+            transforms.ToTensor(),
+            transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
+        ]),
+    }
 
     # Loading datasets
     data_dir = 'dataset'
@@ -140,7 +140,8 @@ if __name__ == "__main__":
     # print(f"Classes found: {class_names}")
     # print(f"Training images: {dataset_sizes['train']}, Validation images: {dataset_sizes['val']}")
 
-    device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+    # device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+    device = torch.device("cpu")
     # print(f"Using device: {device}")
 
     inputs, classes = next(iter(dataloaders['train']))
