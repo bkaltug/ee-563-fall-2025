@@ -151,19 +151,19 @@ if __name__ == "__main__":
     # print(f"Class labels for this batch: {classes}")
 
 # Building a baseline model
-    model = models.resnet18(weights=ResNet18_Weights.DEFAULT)
+    model = models.resnet50(weights=ResNet50_Weights.DEFAULT)
 
     for param in model.parameters():
         param.requires_grad = False
 
     num_ftrs = model.fc.in_features
 
-    # model.fc = nn.Linear(num_ftrs, len(class_names))
-    model.fc = nn.Sequential(
-        nn.Linear(num_ftrs, len(class_names)),
-        nn.LogSoftmax(dim=1)
+    model.fc = nn.Linear(num_ftrs, len(class_names))
+    # model.fc = nn.Sequential(
+    #     nn.Linear(num_ftrs, len(class_names)),
+    #     nn.LogSoftmax(dim=1)
         
-    )
+    # )
 
     for name, param in model.named_parameters():
         if param.requires_grad:
@@ -173,8 +173,8 @@ if __name__ == "__main__":
 
 # Training the model
 
-    # criterion = nn.CrossEntropyLoss()
-    criterion_nll = nn.NLLLoss()
+    criterion = nn.CrossEntropyLoss()
+    # criterion_nll = nn.NLLLoss()
 
     # Picked the most accurate values after testing
     optimizer = optim.SGD(model.parameters(), lr=0.0001, momentum=0.9)
@@ -182,10 +182,12 @@ if __name__ == "__main__":
 
     print("Starting baseline model training...")
     # Call the function to start training
-    trained_model_nll, baseline_history_nll= train_model(model, dataloaders, criterion_nll, optimizer, device, num_epochs=25)
-    torch.save(baseline_history_nll, 'results/history_resnet18_nll.pth')
+    trained_model_resnet50_final, baseline_history_resnet50_final= train_model(model, dataloaders, criterion, optimizer, device, num_epochs=25)
+    torch.save(baseline_history_resnet50_final, 'results/history_resnet50_final.pth')
+    torch.save(trained_model_resnet50_final.state_dict(), 'results/model_resnet50.pth')
+    print("Saved model weights to results/model_resnet50.pth")
 
     print("Baseline training finished.")
-    print(baseline_history_nll['val_acc'])
+    print(baseline_history_resnet50_final['val_acc'])
 
   
