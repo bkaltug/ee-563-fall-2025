@@ -158,7 +158,12 @@ if __name__ == "__main__":
 
     num_ftrs = model.fc.in_features
 
-    model.fc = nn.Linear(num_ftrs, len(class_names))
+    # model.fc = nn.Linear(num_ftrs, len(class_names))
+    model.fc = nn.Sequential(
+        nn.Linear(num_ftrs, len(class_names)),
+        nn.LogSoftmax(dim=1)
+        
+    )
 
     for name, param in model.named_parameters():
         if param.requires_grad:
@@ -168,17 +173,19 @@ if __name__ == "__main__":
 
 # Training the model
 
-    criterion = nn.CrossEntropyLoss()
+    # criterion = nn.CrossEntropyLoss()
+    criterion_nll = nn.NLLLoss()
+
     # Picked the most accurate values after testing
-    # optimizer = optim.SGD(model.parameters(), lr=0.0001, momentum=0.9)
-    optimizer_adam = optim.Adam(model.parameters(), lr=0.001)
+    optimizer = optim.SGD(model.parameters(), lr=0.0001, momentum=0.9)
+    # optimizer_adam = optim.Adam(model.parameters(), lr=0.001)
 
     print("Starting baseline model training...")
     # Call the function to start training
-    trained_model_adam, baseline_history_adam = train_model(model, dataloaders, criterion, optimizer_adam, device, num_epochs=25)
-    torch.save(baseline_history_adam, 'results/history_resnet18_optimizer_adam.pth')
+    trained_model_nll, baseline_history_nll= train_model(model, dataloaders, criterion_nll, optimizer, device, num_epochs=25)
+    torch.save(baseline_history_nll, 'results/history_resnet18_nll.pth')
 
     print("Baseline training finished.")
-    print(baseline_history_adam['val_acc'])
+    print(baseline_history_nll['val_acc'])
 
   
