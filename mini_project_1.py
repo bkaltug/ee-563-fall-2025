@@ -140,8 +140,8 @@ if __name__ == "__main__":
     # print(f"Classes found: {class_names}")
     # print(f"Training images: {dataset_sizes['train']}, Validation images: {dataset_sizes['val']}")
 
-    # device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-    device = torch.device("cpu")
+    device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+    # device = torch.device("cpu")
     # print(f"Using device: {device}")
 
     inputs, classes = next(iter(dataloaders['train']))
@@ -170,14 +170,15 @@ if __name__ == "__main__":
 
     criterion = nn.CrossEntropyLoss()
     # Picked the most accurate values after testing
-    optimizer = optim.SGD(model.parameters(), lr=0.0001, momentum=0.9)
+    # optimizer = optim.SGD(model.parameters(), lr=0.0001, momentum=0.9)
+    optimizer_adam = optim.Adam(model.parameters(), lr=0.001)
 
     print("Starting baseline model training...")
     # Call the function to start training
-    trained_model_18, baseline_history_18 = train_model(model, dataloaders, criterion, optimizer, device, num_epochs=25)
-    torch.save(baseline_history_18, 'results/history_resnet18_no_augment.pth')
+    trained_model_adam, baseline_history_adam = train_model(model, dataloaders, criterion, optimizer_adam, device, num_epochs=25)
+    torch.save(baseline_history_adam, 'results/history_resnet18_optimizer_adam.pth')
 
     print("Baseline training finished.")
-    print(baseline_history_18['val_acc'])
+    print(baseline_history_adam['val_acc'])
 
   
