@@ -59,56 +59,26 @@ def visualize(
 
   return annotated_image
 
-
-IMAGE_FILE1 = 'images/face_right.png'
-IMAGE_FILE2 = 'images/face_left.png'
-IMAGE_FILE3 = 'images/face_straight.png'
+user_choice = input("Please enter the image path:  ")
+IMAGE_FILE = user_choice
 
 base_options = python.BaseOptions(model_asset_path='models/face_detector.tflite')
 options = vision.FaceDetectorOptions(base_options=base_options)
 detector = vision.FaceDetector.create_from_options(options)
 
-image1 = mp.Image.create_from_file(IMAGE_FILE1)
-image2 = mp.Image.create_from_file(IMAGE_FILE2)
-image3 = mp.Image.create_from_file(IMAGE_FILE3)
-
-detection_result1 = detector.detect(image1)
-detection_result2 = detector.detect(image2)
-detection_result3 = detector.detect(image3)
-
-image_copy1 = np.copy(image1.numpy_view())
-image_copy2 = np.copy(image2.numpy_view())
-image_copy3 = np.copy(image3.numpy_view())
-
-annotated_image1 = visualize(image_copy1, detection_result1)
-annotated_image2 = visualize(image_copy2, detection_result2)
-annotated_image3 = visualize(image_copy3, detection_result3)
-
-rgb_annotated_image1 = cv2.cvtColor(annotated_image1, cv2.COLOR_BGR2RGB)
-rgb_annotated_image2 = cv2.cvtColor(annotated_image2, cv2.COLOR_BGR2RGB)
-rgb_annotated_image3 = cv2.cvtColor(annotated_image3, cv2.COLOR_BGR2RGB)
-
-user_choice = input("Enter 1 for the face looking at right, 2 for left or 3 for straight: ")
-
-image_to_show = None
-if user_choice == '1':
-    image_to_show = rgb_annotated_image1
-    det = detection_result1
-elif user_choice == '2':
-    image_to_show = rgb_annotated_image2
-    det = detection_result2
-elif user_choice == '3':
-    image_to_show = rgb_annotated_image3
-    det = detection_result3
-else:
-    print("Invalid input. Please enter 1, 2, or 3.")
+image = mp.Image.create_from_file(IMAGE_FILE)
+detection_result = detector.detect(image)
+image_copy = np.copy(image.numpy_view())
+annotated_image = visualize(image_copy, detection_result)
+rgb_annotated_image = cv2.cvtColor(annotated_image, cv2.COLOR_BGR2RGB)
+image_to_show = rgb_annotated_image
 
 LEFT_THRESHOLD = 0.1 
 RIGHT_THRESHOLD = -0.1  
 face_direction = "straight" 
 
 try:
-    detection = det.detections[0]
+    detection = detection_result.detections[0]
     
     right_eye_x = detection.keypoints[0].x
     left_eye_x = detection.keypoints[1].x
@@ -124,7 +94,6 @@ try:
         face_direction = "right"
     else:
         face_direction = "straight"
-
     print(face_direction)
 
 except IndexError:
