@@ -20,7 +20,6 @@ def _normalized_to_pixel_coordinates(
   def is_valid_normalized_value(value: float) -> bool:
     return (value > 0 or math.isclose(0, value)) and (value < 1 or
                                                       math.isclose(1, value))
-
   if not (is_valid_normalized_value(normalized_x) and
           is_valid_normalized_value(normalized_y)):
     return None
@@ -29,7 +28,7 @@ def _normalized_to_pixel_coordinates(
   return x_px, y_px
 
 def visualize(
-    image,
+      image,
     detection_result
 ) -> np.ndarray:
   annotated_image = image.copy()
