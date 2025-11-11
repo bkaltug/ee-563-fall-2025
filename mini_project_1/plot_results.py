@@ -2,21 +2,16 @@ import torch
 import matplotlib.pyplot as plt
 import os
 
-# --- Setup ---
-# Define the folder where your results are saved
+
 results_dir = 'results'
 
-# Define the number of epochs you trained for
-# This will be the x-axis for your plots
 num_epochs = 25
 epochs = range(num_epochs)
 
-# --- 1. Plot Learning Rate Comparison ---
 
 print("Generating Learning Rate plot...")
 
-# --- !! IMPORTANT !! ---
-# Change these filenames to match the files you saved!
+
 lr_files = {
     'LR = 0.01': 'history_resnet18_sgd_lr0.01_mom0.9.pth',
     'LR = 0.001 (Baseline)': 'history_resnet18_sgd_lr0.001_mom0.9.pth',
@@ -45,19 +40,17 @@ for label, filename in lr_files.items():
 plt.title('Validation Accuracy vs. Epochs (Different Learning Rates)')
 plt.xlabel('Epoch')
 plt.ylabel('Validation Accuracy (%)')
-plt.legend() # Show the legend (e.g., "LR = 0.01")
+plt.legend()
 plt.grid(True)
 
 # Save the plot as an image file in your 'results' folder
 plt.savefig(os.path.join(results_dir, 'plot_learning_rates.png'))
 print(f"Saved plot to {os.path.join(results_dir, 'plot_learning_rates.png')}")
 
-# --- 2. Plot Momentum Comparison ---
+
 
 print("\nGenerating Momentum plot...")
 
-# --- !! IMPORTANT !! ---
-# Change these filenames to match the files you saved!
 momentum_files = {
     'Momentum = 0.8': 'history_resnet18_sgd_lr0.001_mom0.8.pth',
     'Momentum = 0.9 (Baseline)': 'history_resnet18_sgd_lr0.001_mom0.9.pth',
@@ -89,4 +82,3 @@ plt.savefig(os.path.join(results_dir, 'plot_momentum.png'))
 print(f"Saved plot to {os.path.join(results_dir, 'plot_momentum.png')}")
 
 print("\nDone. Check your 'results' folder for 'plot_learning_rates.png' and 'plot_momentum.png'")
-# plt.show() # Optional: uncomment this to display the plots on your screen
