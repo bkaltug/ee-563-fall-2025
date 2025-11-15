@@ -14,12 +14,10 @@ def convert_balloon_to_coco(ann_file, out_file, image_prefix):
     images = []
     obj_count = 0
     
-
     for idx, v in enumerate(data_infos.values()):
         image_filename = v['filename']
         filepath = osp.join(image_prefix, image_filename)
         
-
         if not osp.exists(filepath):
             print(f"Warning: Image file not found {filepath}, skipping annotation.")
             continue
@@ -42,14 +40,12 @@ def convert_balloon_to_coco(ann_file, out_file, image_prefix):
             px = shape_attributes['all_points_x']
             py = shape_attributes['all_points_y']
             
-
             if not px or not py:
                 print(f"Warning: Empty polygon for {image_filename}, skipping region.")
                 continue
                 
             poly = [(x, y) for x, y in zip(px, py)]
             poly_flat = [p for pair in poly for p in pair]
-
 
             x_min = min(px)
             y_min = min(py)

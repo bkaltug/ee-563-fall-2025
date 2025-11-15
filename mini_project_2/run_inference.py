@@ -73,17 +73,12 @@ for model_info in models_to_test:
                     total_balloon_area_pixels += (bbox_area / 2.0)
         
         area_percentage = (total_balloon_area_pixels / total_pixels) * 100
-        
-
         image_filename = os.path.basename(image_path)
         
         print(f"Result for {image_filename}:")
         print(f"Total Balloon Area: {area_percentage:.2f}%")
         
-
         original_vis_path = os.path.join(vis_dir, image_filename)
-        
-
         new_vis_path = os.path.join(output_dir, f"{model_name}_{image_filename}")
         
         if os.path.exists(original_vis_path):

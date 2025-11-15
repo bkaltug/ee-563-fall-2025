@@ -4,6 +4,7 @@ _base_ = [
 ]
 
 data_root = '../dataset/'  
+
 metainfo = {
     'classes': ('balloon',),
     'palette': [
@@ -34,7 +35,6 @@ val_dataloader = dict(
 )
 
 test_dataloader = val_dataloader 
-
 
 model = dict(
     bbox_head=dict(

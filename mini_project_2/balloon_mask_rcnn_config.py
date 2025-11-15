@@ -4,6 +4,7 @@ _base_ = [
 ]
 
 data_root = '../dataset/'  
+
 metainfo = {
     'classes': ('balloon',),  
     'palette': [
