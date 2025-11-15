@@ -82,17 +82,14 @@ def convert_balloon_to_coco(ann_file, out_file, image_prefix):
     mmengine.dump(coco_format_json, out_file)
     print(f"Successfully created COCO annotation: {out_file}")
 
-print("Converting training annotations...")
+# Traning annotations
 convert_balloon_to_coco(
     ann_file='dataset/train/via_region_data.json',
     out_file='dataset/annotations/train.json',
     image_prefix='dataset/train')
 
-print("Converting validation annotations...")
+# Validation annotations
 convert_balloon_to_coco(
     ann_file='dataset/val/via_region_data.json',
     out_file='dataset/annotations/val.json',
     image_prefix='dataset/val')
-
-print("---")
-print("Done! COCO annotations are in the 'dataset/annotations/' folder.")

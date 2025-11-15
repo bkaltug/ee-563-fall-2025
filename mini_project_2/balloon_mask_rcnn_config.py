@@ -1,3 +1,4 @@
+# Mask RCNN configuration files.
 _base_ = [
     'mmdetection/configs/mask_rcnn/mask-rcnn_r50_fpn_1x_coco.py',
 ]

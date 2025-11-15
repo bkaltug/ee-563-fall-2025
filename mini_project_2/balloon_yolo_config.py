@@ -1,3 +1,4 @@
+# YOLO v3 configuration files.
 _base_ = [
     'mmdetection/configs/yolo/yolov3_d53_8xb8-ms-608-273e_coco.py',
 ]
