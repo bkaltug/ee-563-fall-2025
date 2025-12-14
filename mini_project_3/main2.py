@@ -30,7 +30,7 @@ class AITaskHandler:
 
     def text_generation(self, text):
         generator = self._get_pipeline("text-generation")
-        result = generator(text, max_length=50, num_return_sequences=1)
+        result = generator(text, max_length=50, num_return_sequences=0)
         return result[0]['generated_text']
 
     def mask_filling(self, text):
@@ -95,13 +95,13 @@ with gr.Blocks(title="EE563 AI Project") as demo:
     with gr.Tab("3. Text Generation"):
         g_input = gr.Textbox(label="Start of Sentence", value="In this project it can be observed that")
         g_button = gr.Button("Generate Text")
-        g_output = gr.Textbox(label="Completed Text")
+        g_output = gr.Textbox(label="Completed Text", lines=10)
         g_button.click(handler.text_generation, inputs=g_input, outputs=g_output)
 
     with gr.Tab("4. Mask Filling"):
         m_input = gr.Textbox(label="Input Text (use <mask>)", value="This is a course about the <mask> library.")
         m_button = gr.Button("Fill Mask")
-        m_output = gr.Textbox(label="Predictions")
+        m_output = gr.Textbox(label="Predictions", lines = 3)
         m_button.click(handler.mask_filling, inputs=m_input, outputs=m_output)
 
     with gr.Tab("5. NER"):
@@ -126,7 +126,7 @@ with gr.Blocks(title="EE563 AI Project") as demo:
         
         sum_input = gr.Textbox(label="Long Text", lines=5, value=sum_text)
         sum_button = gr.Button("Summarize")
-        sum_output = gr.Textbox(label="Summary")
+        sum_output = gr.Textbox(label="Summary", lines=10)
         sum_button.click(handler.text_summarization, inputs=sum_input, outputs=sum_output)
 
     with gr.Tab("8. Translation"):
