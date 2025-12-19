@@ -1,7 +1,5 @@
 name: foody
-description: "A new Flutter project."
-# The following line prevents the package from being accidentally published to
-# pub.dev using `flutter pub publish`. This is preferred for private packages.
+description: "An app supported by AI to prepare you dlicious recipes just by the photo of ingredients."
 publish_to: 'none' # Remove this line if you wish to publish to pub.dev
 
 # The following defines the version and build number for your application.
@@ -33,11 +31,20 @@ dependencies:
 
   # The following adds the Cupertino Icons font to your application.
   # Use with the CupertinoIcons class for iOS style icons.
+  camera: ^0.11.0
+  google_mlkit_image_labeling: ^0.14.0
+  google_generative_ai: ^0.4.0
+  permission_handler: ^12.0.0
+  path_provider: ^2.1.0
+  path: ^1.9.0
   cupertino_icons: ^1.0.8
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
+
+  flutter_launcher_icons: ^0.13.1
+  flutter_native_splash: ^2.3.1
 
   # The "flutter_lints" package below contains a set of recommended lints to
   # encourage good coding practices. The lint set provided by the package is
@@ -87,3 +94,17 @@ flutter:
   #
   # For details regarding fonts from package dependencies,
   # see https://flutter.dev/to/font-from-package
+# 1. APP ICON CONFIGURATION
+flutter_launcher_icons:
+  android: "launcher_icon"
+  ios: true
+  image_path: "assets/images/foody_icon.jpg"
+  min_sdk_android: 21 # Optional but good for compatibility
+
+# 2. SPLASH SCREEN CONFIGURATION
+flutter_native_splash:
+  color: "#4B3B8B" # This is the hex code for Colors.teal
+  image: "assets/images/foody_icon.jpg"
+  android_12:
+    image: "assets/images/foody_icon.jpg"
+    color: "#4B3B8B"
