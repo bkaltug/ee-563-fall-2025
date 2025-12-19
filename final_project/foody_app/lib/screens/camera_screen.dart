@@ -59,6 +59,7 @@ class _CameraScreenState extends State<CameraScreen> {
     super.dispose();
   }
 
+//init
   @override
   Widget build(BuildContext context) {
     if (!_isCameraInitialized) {
