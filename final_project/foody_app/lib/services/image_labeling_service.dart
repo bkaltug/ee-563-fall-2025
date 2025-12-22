@@ -6,7 +6,7 @@ class ImageLabelingService {
   ImageLabelingService() {
     // Low threshold (0.2) to catch hard-to-see items like Eggs
     final ImageLabelerOptions options = ImageLabelerOptions(confidenceThreshold: 0.2);
-    _imageLabeler = ImageLabeler(options: options);
+    _imageLabeler = ImageLabeler(options: options,);
   }
 
   Future<List<String>> processImage(String imagePath) async {

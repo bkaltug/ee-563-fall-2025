@@ -16,53 +16,73 @@ class RecipeScreen extends StatelessWidget {
 
     return Scaffold(
       backgroundColor: Colors.white,
-      body: CustomScrollView(
-        slivers: [
-          SliverAppBar(
-            expandedHeight: 250.0,
-            floating: false,
-            pinned: true,
-            backgroundColor: Colors.teal,
-            flexibleSpace: FlexibleSpaceBar(
-              title: Text(
-                title,
-                style: const TextStyle(
-                  color: Colors.white,
-                  shadows: [Shadow(color: Colors.black45, blurRadius: 10)],
+      body: SafeArea(
+        child: CustomScrollView(
+          slivers: [
+            SliverAppBar(
+              expandedHeight: 250.0,
+              floating: false,
+              pinned: true,
+              backgroundColor: Colors.teal,
+              flexibleSpace: FlexibleSpaceBar(
+                title: Text(
+                  title,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    shadows: [Shadow(color: Colors.black45, blurRadius: 10)],
+                  ),
+                ),
+                background: Image.network(
+                  'https://source.unsplash.com/800x600/?food,dinner',
+                  fit: BoxFit.cover,
+                  errorBuilder: (context, error, stackTrace) {
+                    return Container(
+                      color: Colors.teal.shade300,
+                      child: const Icon(Icons.restaurant_menu, size: 80, color: Colors.white),
+                    );
+                  },
                 ),
               ),
-              background: Image.network(
-                'https://source.unsplash.com/800x600/?food,dinner',
-                fit: BoxFit.cover,
-              ),
             ),
-          ),
-          SliverToBoxAdapter(
-            child: Padding(
+            SliverPadding(
               padding: const EdgeInsets.all(20.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Wrap(
-                    spacing: 8,
-                    children: ingredients.map((ing) => Chip(
-                      label: Text(ing.toString()),
-                      backgroundColor: Colors.teal.shade50,
-                      labelStyle: const TextStyle(color: Colors.teal),
-                    )).toList(),
-                  ),
+              sliver: SliverList(
+                delegate: SliverChildListDelegate([
+                  // 1. Ingredients Chips
+                  if (ingredients.isNotEmpty)
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: ingredients.map((ing) {
+                        return Chip(
+                          label: Text(ing?.toString() ?? 'Unknown'),
+                          backgroundColor: Colors.teal.shade50,
+                          labelStyle: const TextStyle(color: Colors.teal),
+                        );
+                      }).toList(),
+                    ),
+                  
                   const SizedBox(height: 20),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceAround,
-                    children: [
-                      _buildStatItem(Icons.timer, time),
-                      _buildStatItem(Icons.local_fire_department, calories),
-                      _buildStatItem(Icons.people, servings),
-                    ],
+
+                  // 2. Stats Section
+                  Center(
+                    child: Wrap(
+                      spacing: 12,
+                      runSpacing: 12,
+                      alignment: WrapAlignment.center,
+                      children: [
+                        _buildStatItem(Icons.timer, time),
+                        _buildStatItem(Icons.local_fire_department, calories),
+                        _buildStatItem(Icons.people, servings),
+                      ],
+                    ),
                   ),
+
                   const SizedBox(height: 30),
                   const Divider(),
                   const SizedBox(height: 10),
+
+                  // 3. Instructions Header
                   const Text(
                     "Instructions",
                     style: TextStyle(
@@ -72,43 +92,74 @@ class RecipeScreen extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(height: 15),
-                  ListView.builder(
-                    padding: EdgeInsets.zero,
-                    shrinkWrap: true,
-                    physics: const NeverScrollableScrollPhysics(),
-                    itemCount: steps.length,
-                    itemBuilder: (context, index) {
-                      return ListTile(
-                        leading: CircleAvatar(
-                          backgroundColor: Colors.teal,
-                          child: Text("${index + 1}", style: const TextStyle(color: Colors.white)),
-                        ),
-                        title: Text(
-                          steps[index].toString(),
-                          style: const TextStyle(fontSize: 16, height: 1.5),
-                        ),
-                        contentPadding: const EdgeInsets.symmetric(vertical: 8),
-                      );
-                    },
-                  ),
-                  const SizedBox(height: 50),
+
+                  // 4. Instructions List
+                  ...List.generate(steps.length, (index) {
+                    final step = steps[index];
+                    if (step == null) return const SizedBox.shrink();
+                    
+                    return Padding(
+                      padding: const EdgeInsets.only(bottom: 16.0),
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          CircleAvatar(
+                            backgroundColor: Colors.teal,
+                            radius: 18,
+                            child: Text(
+                              "${index + 1}",
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Padding(
+                              padding: const EdgeInsets.only(top: 2.0),
+                              child: Text(
+                                step.toString(),
+                                style: const TextStyle(
+                                  fontSize: 16,
+                                  height: 1.5,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    );
+                  }),
+
+                  const SizedBox(height: 30),
                   SizedBox(
                     width: double.infinity,
                     child: ElevatedButton(
-                      onPressed: () {},
+                      onPressed: () {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text('Happy Cooking! 👨‍🍳')),
+                        );
+                      },
                       style: ElevatedButton.styleFrom(
                         backgroundColor: Colors.teal,
                         padding: const EdgeInsets.symmetric(vertical: 15),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
                       ),
-                      child: const Text("Start Cooking Now", style: TextStyle(fontSize: 18, color: Colors.white)),
+                      child: const Text(
+                        "Start Cooking Now",
+                        style: TextStyle(fontSize: 18, color: Colors.white),
+                      ),
                     ),
                   ),
-                ],
+                  const SizedBox(height: 20),
+                ]),
               ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -121,6 +172,7 @@ class RecipeScreen extends StatelessWidget {
         borderRadius: BorderRadius.circular(20),
       ),
       child: Row(
+        mainAxisSize: MainAxisSize.min, // Essential for Wrap
         children: [
           Icon(icon, color: Colors.teal, size: 20),
           const SizedBox(width: 8),

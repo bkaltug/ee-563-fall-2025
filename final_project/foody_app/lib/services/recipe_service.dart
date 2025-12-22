@@ -1,14 +1,18 @@
 import 'dart:convert';
 import 'package:google_generative_ai/google_generative_ai.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 class RecipeService {
   late final GenerativeModel _model;
 
-  // ⚠️ REPLACE WITH YOUR ACTUAL API KEY
-  static const String _apiKey = 'AIzaSyDOZfOxhJurqNsUUFiVG9cG2RQnEgtxRdI';
+
+  static final String _apiKey = dotenv.env['GEMINI_API_KEY'] ?? '';
 
   RecipeService() {
     // Using 'gemini-pro' as it is stable and widely available
+    if (_apiKey.isEmpty) {
+      print("CRITICAL ERROR: No API Key found in .env");
+    }
     _model = GenerativeModel(
       model: 'gemini-flash-latest', 
       apiKey: _apiKey,
@@ -20,14 +24,18 @@ class RecipeService {
     
     // The Prompt: Forces Gemini to ignore generic "Food" tags and output JSON
     final prompt = '''
-      I have identified these items from a picture: $ingredientsString.
+      I have built an app where users take picture of their existing ingredients and we return them a meal recipe with those ingredients. I am going to use you to get a meal recipe from the ingredients.
       
-      TASK:
+      The list of the ingredients received from the picutre is here $ingredientsString.
+      
+      Create a meal recipe with those ingredients and obeying the rules below.
+      
+      RULES:
       1. Identify the specific edible ingredients from this list.
       2. Ignore any non-food items (like "Table", "Wood", "Plate").
       3. If the list is vague (like only "Vegetable" or "Food"), create a simple, generic recipe (like "Vegetable Stir Fry" or "Omelet") but DO NOT invent ingredients I didn't scan (like Steak or Salmon).
-      
-      Return ONLY a valid JSON object with this exact structure, no markdown formatting:
+      4. You can assume that salt, oil, butter and water exists even if they are not included in the list.
+      5.Return ONLY a valid JSON object with this exact structure, no markdown formatting:
       {
         "title": "Recipe Name",
         "description": "Short description.",

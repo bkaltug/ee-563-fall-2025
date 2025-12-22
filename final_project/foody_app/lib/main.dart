@@ -1,8 +1,13 @@
 import 'package:flutter/material.dart';
 import 'screens/home_screen.dart'; 
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  
+  // Load the secret .env file
+  await dotenv.load(fileName: ".env");
+
   runApp(const FoodyApp());
 }
 

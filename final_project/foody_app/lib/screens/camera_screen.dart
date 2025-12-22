@@ -15,7 +15,7 @@ class CameraScreen extends StatefulWidget {
 class _CameraScreenState extends State<CameraScreen> {
   CameraController? _controller;
   bool _isCameraInitialized = false;
-  bool _isGenerating = false; // Controls the loading overlay
+  bool _isGenerating = false; 
 
   final ImageLabelingService _labelingService = ImageLabelingService();
   final RecipeService _recipeService = RecipeService();
@@ -35,7 +35,8 @@ class _CameraScreenState extends State<CameraScreen> {
 
     _controller = CameraController(
       cameras.first,
-      ResolutionPreset.high,
+      // 1. FIX: Lowered resolution from 'high' to 'medium' to prevent memory crashes
+      ResolutionPreset.medium, 
       enableAudio: false,
     );
 
@@ -67,10 +68,9 @@ class _CameraScreenState extends State<CameraScreen> {
       backgroundColor: Colors.black,
       body: Stack(
         children: [
-          // A. The Camera Feed
+          // Camera Preview
           Center(child: CameraPreview(_controller!)),
-
-          // B. The Top Overlay
+          // Overlay Header
           Positioned(
             top: 50,
             left: 0,
@@ -90,7 +90,7 @@ class _CameraScreenState extends State<CameraScreen> {
             ),
           ),
 
-          // C. The Capture UI
+          // Bottom Controls
           Positioned(
             bottom: 30,
             left: 0,
@@ -98,47 +98,49 @@ class _CameraScreenState extends State<CameraScreen> {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: [
-                // 1. Gallery / DEMO BUTTON (Long Press)
+                // Gallery / Demo Button
                 GestureDetector(
-                  onLongPress: () {
-                    // 🚨 EMERGENCY DEMO MODE
+                  onLongPress: () async {
                     ScaffoldMessenger.of(context).showSnackBar(
                       const SnackBar(content: Text('⚡ Entering Demo Mode...')),
                     );
                     
+                    // 2. FIX: Pause camera before navigating to save resources
+                    await _controller?.pausePreview(); 
+                    
                     final mockData = _recipeService.getMockRecipe();
-                    Navigator.push(
+                    
+                    if (!mounted) return;
+                    await Navigator.push(
                       context,
                       MaterialPageRoute(
                         builder: (context) => RecipeScreen(recipeData: mockData),
                       ),
                     );
+
+                    // Resume when coming back
+                    _controller?.resumePreview(); 
                   },
                   child: IconButton(
                     icon: const Icon(Icons.photo_library, color: Colors.white),
-                    onPressed: () {
-                       // Optional: Normal gallery logic
-                    },
+                    onPressed: () {},
                   ),
                 ),
 
-                // 2. Shutter Button
+                // Shutter Button
                 FloatingActionButton.large(
                   backgroundColor: Colors.white,
                   child: const Icon(Icons.camera_alt, color: Colors.teal),
                   onPressed: () async {
                     if (!_isCameraInitialized) return;
 
-                    setState(() => _isGenerating = true); // Start Loading
+                    setState(() => _isGenerating = true); 
 
                     try {
-                      // 1. Take Picture
                       final image = await _controller!.takePicture();
                       
-                      // 2. Get Ingredients
                       final ingredients = await _labelingService.processImage(image.path);
                       
-                      // Filter generic noise
                       final specificIngredients = ingredients.where((i) => i != "Food" && i != "Vegetable").toList();
 
                       if (specificIngredients.isEmpty) {
@@ -147,33 +149,39 @@ class _CameraScreenState extends State<CameraScreen> {
                             const SnackBar(content: Text('Too generic! Try getting closer.')),
                           );
                         }
+                        setState(() => _isGenerating = false);
                         return;
                       }
 
                       print("Sending to Gemini: $specificIngredients");
 
-                      // 3. Get Recipe
                       final recipeJson = await _recipeService.generateRecipe(specificIngredients);
 
                       if (recipeJson != null && mounted) {
-                        Navigator.push(
+                        // 2. FIX: Pause camera before navigating
+                        await _controller?.pausePreview();
+
+                        await Navigator.push(
                           context,
                           MaterialPageRoute(
                             builder: (context) => RecipeScreen(recipeData: recipeJson),
                           ),
                         );
+                        
+                        // Resume when coming back
+                        _controller?.resumePreview();
                       } 
                     } catch (e) {
                       print("Error: $e");
                     } finally {
                       if (mounted) {
-                        setState(() => _isGenerating = false); // Stop Loading
+                        setState(() => _isGenerating = false); 
                       }
                     }
                   },
                 ),
 
-                // 3. Settings Placeholder
+                // Settings Placeholder
                 IconButton(
                   icon: const Icon(Icons.settings, color: Colors.white),
                   onPressed: () {},
@@ -182,7 +190,7 @@ class _CameraScreenState extends State<CameraScreen> {
             ),
           ),
 
-          // D. Loading Overlay
+          // Loading Overlay
           if (_isGenerating)
             Container(
               color: Colors.black54,
@@ -193,7 +201,7 @@ class _CameraScreenState extends State<CameraScreen> {
                     const CircularProgressIndicator(color: Colors.teal),
                     const SizedBox(height: 20),
                     const Text(
-                      "Foody is creating your recipe...",
+                      "Chef Gemini is thinking...",
                       style: TextStyle(color: Colors.white, fontSize: 18),
                     ),
                   ],
