@@ -15,6 +15,7 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   final ImagePicker _picker = ImagePicker();
   final GeminiService _geminiService = GeminiService();
+  final TextEditingController _ingredientController = TextEditingController();
 
   File? _selectedImage;
   List<String> _detectedIngredients = [];
@@ -30,6 +31,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   void dispose() {
+    _ingredientController.dispose();
     super.dispose();
   }
 
@@ -421,6 +423,15 @@ class _HomeScreenState extends State<HomeScreen> {
                                   fontWeight: FontWeight.bold,
                                 ),
                           ),
+                          const Spacer(),
+                          Text(
+                            'Tap × to remove',
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: Colors.grey.shade600,
+                              fontStyle: FontStyle.italic,
+                            ),
+                          ),
                         ],
                       ),
                       const SizedBox(height: 12),
@@ -432,8 +443,65 @@ class _HomeScreenState extends State<HomeScreen> {
                             label: Text(ingredient),
                             backgroundColor: Colors.green[100],
                             labelStyle: const TextStyle(color: Colors.green),
+                            deleteIcon: Icon(Icons.close, size: 18, color: Colors.green.shade700),
+                            onDeleted: () {
+                              setState(() {
+                                _detectedIngredients.remove(ingredient);
+                              });
+                            },
                           );
                         }).toList(),
+                      ),
+                      const SizedBox(height: 16),
+                      // Add new ingredient input
+                      Row(
+                        children: [
+                          Expanded(
+                            child: TextField(
+                              controller: _ingredientController,
+                              decoration: InputDecoration(
+                                hintText: 'Add an ingredient...',
+                                contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                                border: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(8),
+                                  borderSide: BorderSide(color: Colors.grey.shade300),
+                                ),
+                                enabledBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(8),
+                                  borderSide: BorderSide(color: Colors.grey.shade300),
+                                ),
+                                focusedBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(8),
+                                  borderSide: const BorderSide(color: Colors.green),
+                                ),
+                              ),
+                              textCapitalization: TextCapitalization.words,
+                              onSubmitted: (value) {
+                                if (value.trim().isNotEmpty) {
+                                  setState(() {
+                                    _detectedIngredients.add(value.trim());
+                                    _ingredientController.clear();
+                                  });
+                                }
+                              },
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          IconButton(
+                            onPressed: () {
+                              final value = _ingredientController.text;
+                              if (value.trim().isNotEmpty) {
+                                setState(() {
+                                  _detectedIngredients.add(value.trim());
+                                  _ingredientController.clear();
+                                });
+                              }
+                            },
+                            icon: const Icon(Icons.add_circle),
+                            color: Colors.green,
+                            iconSize: 32,
+                          ),
+                        ],
                       ),
                     ],
                   ),
