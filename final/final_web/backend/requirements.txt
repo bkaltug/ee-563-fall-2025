@@ -1,0 +1,41 @@
+# Backend Requirements for AI Recipe Generator
+# Install with: pip install -r requirements.txt
+
+# Web Framework
+flask>=2.3.0
+flask-cors>=4.0.0
+werkzeug>=2.3.0
+
+# Image Processing
+Pillow>=10.0.0
+numpy>=1.24.0
+
+# MMDetection and dependencies
+# Note: Install PyTorch first from https://pytorch.org based on your CUDA version
+# Example for CUDA 11.8:
+# pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu118
+
+# MMDetection ecosystem
+# Install in order:
+# 1. pip install -U openmim
+# 2. mim install mmengine
+# 3. mim install "mmcv>=2.0.0"
+# 4. mim install mmdet
+
+openmim>=0.3.9
+mmengine>=0.8.0
+mmcv>=2.0.0
+mmdet>=3.1.0
+
+# HuggingFace Transformers
+transformers>=4.35.0
+huggingface_hub>=0.19.0
+accelerate>=0.24.0
+sentencepiece>=0.1.99
+
+# Optional: For GPU inference optimization
+# bitsandbytes>=0.41.0  # For 8-bit quantization
+
+# Utilities
+requests>=2.31.0
+python-dotenv>=1.0.0

@@ -12,6 +12,16 @@
 .swiftpm/
 migrate_working_dir/
 
+# Signing keys - NEVER commit these!
+android/key.properties
+android/*.keystore
+android/*.jks
+*.keystore
+*.jks
+
+# API Keys
+lib/config/api_keys.dart
+
 # IntelliJ related
 *.iml
 *.ipr
