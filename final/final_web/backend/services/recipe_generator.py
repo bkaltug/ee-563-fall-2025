@@ -1,8 +1,3 @@
-"""
-Recipe Generation Service using HuggingFace Transformers
-This module handles recipe generation from ingredient lists using LLMs
-"""
-
 import os
 from typing import List, Dict, Optional
 import warnings
@@ -10,34 +5,80 @@ warnings.filterwarnings('ignore')
 
 
 class RecipeGenerator:
-    """
-    Recipe Generator using HuggingFace Transformers
     
-    Generates cooking recipes based on provided ingredient lists
-    using various LLM models from HuggingFace.
-    """
-    
-    # Supported models for recipe generation
     SUPPORTED_MODELS = {
         'gpt2': 'gpt2',
         'gpt2-medium': 'gpt2-medium',
         'distilgpt2': 'distilgpt2',
         'bloom': 'bigscience/bloom-560m',
         'flan-t5': 'google/flan-t5-base',
+        'flan-t5-large': 'google/flan-t5-large',
         'mistral': 'mistralai/Mistral-7B-Instruct-v0.1',
         'llama2': 'meta-llama/Llama-2-7b-chat-hf',
         'recipe-nlg': 'flax-community/t5-recipe-generation',
     }
     
-    def __init__(self, model_name: str = 'flan-t5', use_api: bool = False, api_token: str = None):
-        """
-        Initialize the recipe generator
-        
-        Args:
-            model_name: Name of the HuggingFace model to use
-            use_api: Whether to use HuggingFace API instead of local model
-            api_token: HuggingFace API token (required if use_api=True)
-        """
+    DEFAULT_QUANTITIES = {
+        # Proteins
+        'meat': '1 lb ground beef',
+        'beef': '1 lb beef stew meat, cubed',
+        'chicken': '1 lb boneless skinless chicken breast',
+        'pork': '1 lb pork tenderloin, sliced',
+        'fish': '1 lb white fish fillets',
+        'shrimp': '1 lb large shrimp, peeled and deveined',
+        'bacon': '6 strips thick-cut bacon',
+        'sausage': '4 Italian sausage links',
+        'turkey': '1 lb ground turkey',
+        'lamb': '1 lb lamb shoulder, cubed',
+        # Dairy
+        'cheese': '1 cup shredded cheddar cheese',
+        'milk': '1 cup whole milk',
+        'butter': '4 tbsp unsalted butter',
+        'cream': '1 cup heavy whipping cream',
+        'egg': '4 large eggs',
+        'eggs': '4 large eggs',
+        'yogurt': '1 cup plain yogurt',
+        # Vegetables
+        'tomato': '3 medium ripe tomatoes, diced',
+        'lettuce': '1 head romaine lettuce, chopped',
+        'onion': '1 large yellow onion, diced',
+        'garlic': '4 cloves garlic, minced',
+        'potato': '4 medium russet potatoes, cubed',
+        'carrot': '3 large carrots, sliced',
+        'pepper': '2 bell peppers, diced',
+        'mushroom': '8 oz cremini mushrooms, sliced',
+        'broccoli': '2 cups broccoli florets',
+        'spinach': '4 cups fresh baby spinach',
+        'cucumber': '1 English cucumber, sliced',
+        'celery': '3 stalks celery, chopped',
+        'corn': '2 cups fresh corn kernels',
+        'peas': '1 cup frozen peas',
+        'beans': '1 can (15 oz) black beans, drained',
+        'zucchini': '2 medium zucchini, sliced',
+        'cabbage': '1/2 head green cabbage, shredded',
+        'cauliflower': '1 head cauliflower, cut into florets',
+        'asparagus': '1 bunch asparagus, trimmed',
+        'green beans': '1 lb fresh green beans, trimmed',
+        # Grains/Bread
+        'bread': '4 slices sandwich bread',
+        'rice': '2 cups long grain white rice',
+        'pasta': '1 lb spaghetti pasta',
+        'noodles': '8 oz egg noodles',
+        'flour': '2 cups all-purpose flour',
+        'oats': '1 cup old-fashioned rolled oats',
+        # Seasonings & Others
+        'salt': '1 tsp kosher salt',
+        'oil': '3 tbsp extra virgin olive oil',
+        'sugar': '2 tbsp granulated sugar',
+        'honey': '2 tbsp honey',
+        'soy sauce': '3 tbsp soy sauce',
+        'vinegar': '2 tbsp white wine vinegar',
+        'lemon': '2 fresh lemons, juiced',
+        'lime': '2 fresh limes, juiced',
+        'ginger': '1 tbsp fresh ginger, minced',
+    }
+    
+    def __init__(self, model_name: str = 'recipe-nlg', use_api: bool = False, api_token: str = None, lazy_load: bool = True):
         self.model_name = model_name
         self.use_api = use_api
         self.api_token = api_token or os.environ.get('HUGGINGFACE_API_TOKEN')
@@ -45,100 +86,72 @@ class RecipeGenerator:
         self.model = None
         self.tokenizer = None
         self.pipeline = None
+        self.use_mock = False
+        self._initialized = False
         
-        # Use mock generation by default for fast response
-        # Set to False to try loading the actual model
-        self.use_mock = True
+        # Lazy loading: only initialize when actually needed (on first generate call)
+        if not lazy_load:
+            self._ensure_initialized()
+    
+    def _ensure_initialized(self):
+        if self._initialized:
+            return
         
-        if not self.use_mock:
-            if use_api and self.api_token:
-                self._init_api()
-            else:
-                try:
-                    self._init_local_model()
-                except Exception as e:
-                    print(f"Warning: Failed to initialize local model. Using mock generation. Error: {e}")
-                    self.use_mock = True
+        if self.use_api and self.api_token:
+            self._init_api()
+        else:
+            self._init_local_model()
+        
+        self._initialized = True
     
     def _init_api(self):
-        """Initialize HuggingFace API client"""
-        try:
-            from huggingface_hub import InferenceClient
-            
-            model_id = self.SUPPORTED_MODELS.get(self.model_name, self.model_name)
-            self.client = InferenceClient(token=self.api_token)
-            self.model_id = model_id
-            print(f"HuggingFace API client initialized with model: {model_id}")
-            
-        except ImportError:
-            print("Warning: huggingface_hub not installed. Using mock generation.")
-            self.use_mock = True
-        except Exception as e:
-            print(f"Warning: Failed to initialize HuggingFace API. Error: {e}")
-            self.use_mock = True
+        from huggingface_hub import InferenceClient
+        
+        model_id = self.SUPPORTED_MODELS.get(self.model_name, self.model_name)
+        self.client = InferenceClient(token=self.api_token)
+        self.model_id = model_id
+        print(f"HuggingFace API client initialized with model: {model_id}")
     
     def _init_local_model(self):
-        """Initialize local HuggingFace model"""
-        try:
-            from transformers import pipeline, AutoModelForSeq2SeqLM, AutoTokenizer
-            import torch
-            
-            model_id = self.SUPPORTED_MODELS.get(self.model_name, self.model_name)
-            
-            # Determine device
-            device = 0 if torch.cuda.is_available() else -1
-            
-            # Special handling for different model types
-            if 't5' in model_id.lower() or 'flan' in model_id.lower():
-                # Seq2Seq models like T5, FLAN-T5
-                self.pipeline = pipeline(
-                    'text2text-generation',
-                    model=model_id,
-                    device=device,
-                    max_length=512
-                )
-            elif 'gpt' in model_id.lower() or 'bloom' in model_id.lower():
-                # Causal LM models
-                self.pipeline = pipeline(
-                    'text-generation',
-                    model=model_id,
-                    device=device,
-                    max_length=512
-                )
-            else:
-                # Default to text generation
-                self.pipeline = pipeline(
-                    'text-generation',
-                    model=model_id,
-                    device=device,
-                    max_length=512
-                )
-            
-            print(f"Local model initialized: {model_id}")
-            
-        except ImportError:
-            raise ImportError("transformers library is not installed")
-        except Exception as e:
-            raise Exception(f"Failed to load model: {e}")
+        from transformers import pipeline, AutoModelForSeq2SeqLM, AutoTokenizer
+        import torch
+        
+        model_id = self.SUPPORTED_MODELS.get(self.model_name, self.model_name)
+        
+        # Determine device
+        device = 0 if torch.cuda.is_available() else -1
+        device_name = "GPU" if device == 0 else "CPU"
+        print(f"Initializing model on {device_name}...")
+        
+        if 't5' in model_id.lower() or 'flan' in model_id.lower():
+            self.pipeline = pipeline(
+                'text2text-generation',
+                model=model_id,
+                device=device,
+                max_length=512
+            )
+        elif 'gpt' in model_id.lower() or 'bloom' in model_id.lower():
+            self.pipeline = pipeline(
+                'text-generation',
+                model=model_id,
+                device=device,
+                max_length=512
+            )
+        else:
+            self.pipeline = pipeline(
+                'text-generation',
+                model=model_id,
+                device=device,
+                max_length=512
+            )
+        
+        print(f"✓ Local model initialized: {model_id}")
     
     def generate(self, ingredients: List[str], 
                  cuisine_type: Optional[str] = None,
                  dietary_restrictions: Optional[List[str]] = None,
                  cooking_time: Optional[int] = None) -> Dict:
-        """
-        Generate a recipe based on ingredients
-        
-        Args:
-            ingredients: List of ingredient names
-            cuisine_type: Optional cuisine preference (Italian, Mexican, etc.)
-            dietary_restrictions: Optional dietary restrictions (vegetarian, gluten-free, etc.)
-            cooking_time: Optional max cooking time in minutes
-            
-        Returns:
-            Dictionary containing the generated recipe
-        """
-        if self.use_mock:
-            return self._mock_generate(ingredients, cuisine_type, dietary_restrictions, cooking_time)
+        self._ensure_initialized()
         
         if self.use_api:
             return self._api_generate(ingredients, cuisine_type, dietary_restrictions, cooking_time)
@@ -149,33 +162,33 @@ class RecipeGenerator:
                       cuisine_type: Optional[str] = None,
                       dietary_restrictions: Optional[List[str]] = None,
                       cooking_time: Optional[int] = None) -> str:
-        """Build the prompt for recipe generation"""
+        ingredient_with_quantities = []
+        for ing in ingredients:
+            ing_lower = ing.lower().strip()
+            if ing_lower in self.DEFAULT_QUANTITIES:
+                ingredient_with_quantities.append(self.DEFAULT_QUANTITIES[ing_lower])
+            else:
+                ingredient_with_quantities.append(f"1 cup {ing}")
         
-        ingredient_list = ', '.join(ingredients)
+        ingredient_list = ', '.join(ingredient_with_quantities)
         
-        prompt = f"Generate a detailed recipe using these ingredients: {ingredient_list}."
+        if self.model_name == 'recipe-nlg':
+            prompt = f"items: {ingredient_list}"
+            return prompt
+        
+        prompt = f"Write a complete cooking recipe using {ingredient_list}."
         
         if cuisine_type:
-            prompt += f" Make it a {cuisine_type} style dish."
+            prompt = f"Write a {cuisine_type} recipe using {ingredient_list}."
         
         if dietary_restrictions:
             restrictions = ', '.join(dietary_restrictions)
-            prompt += f" The recipe should be {restrictions}."
+            prompt += f" Make it {restrictions}."
         
         if cooking_time:
-            prompt += f" The total cooking time should be under {cooking_time} minutes."
+            prompt += f" Cooking time under {cooking_time} minutes."
         
-        prompt += """
-
-Please provide:
-1. Recipe name
-2. List of ingredients with quantities
-3. Step-by-step cooking instructions
-4. Estimated cooking time
-5. Number of servings
-6. Optional tips or variations
-
-Recipe:"""
+        prompt += " Include the recipe name, ingredient amounts, and step-by-step instructions."
         
         return prompt
     
@@ -183,63 +196,132 @@ Recipe:"""
                       cuisine_type: Optional[str] = None,
                       dietary_restrictions: Optional[List[str]] = None,
                       cooking_time: Optional[int] = None) -> Dict:
-        """Generate recipe using HuggingFace API"""
-        try:
-            prompt = self._build_prompt(ingredients, cuisine_type, dietary_restrictions, cooking_time)
-            
-            response = self.client.text_generation(
-                prompt,
-                model=self.model_id,
-                max_new_tokens=500,
-                temperature=0.7,
-                top_p=0.9,
-                do_sample=True
-            )
-            
-            return self._parse_recipe(response, ingredients)
-            
-        except Exception as e:
-            print(f"API generation error: {e}")
-            return self._mock_generate(ingredients, cuisine_type, dietary_restrictions, cooking_time)
+        prompt = self._build_prompt(ingredients, cuisine_type, dietary_restrictions, cooking_time)
+        
+        response = self.client.text_generation(
+            prompt,
+            model=self.model_id,
+            max_new_tokens=500,
+            temperature=0.7,
+            top_p=0.9,
+            do_sample=True
+        )
+        
+        return self._parse_recipe(response, ingredients)
     
     def _local_generate(self, ingredients: List[str],
                         cuisine_type: Optional[str] = None,
                         dietary_restrictions: Optional[List[str]] = None,
                         cooking_time: Optional[int] = None) -> Dict:
-        """Generate recipe using local model"""
-        try:
-            prompt = self._build_prompt(ingredients, cuisine_type, dietary_restrictions, cooking_time)
-            
-            # Generate text
+        prompt = self._build_prompt(ingredients, cuisine_type, dietary_restrictions, cooking_time)
+        
+        max_attempts = 2
+        for attempt in range(max_attempts):
             outputs = self.pipeline(
                 prompt,
-                max_new_tokens=500,
-                temperature=0.7,
+                max_new_tokens=512,
+                temperature=0.7 + (attempt * 0.1),
                 top_p=0.9,
                 do_sample=True,
-                num_return_sequences=1
+                num_return_sequences=1,
+                repetition_penalty=1.2 + (attempt * 0.1),
+                no_repeat_ngram_size=3
             )
             
-            # Extract generated text
             if isinstance(outputs, list) and len(outputs) > 0:
                 generated_text = outputs[0].get('generated_text', '')
-                # Remove the prompt from the output for causal models
                 if prompt in generated_text:
                     generated_text = generated_text.replace(prompt, '').strip()
             else:
                 generated_text = str(outputs)
             
-            return self._parse_recipe(generated_text, ingredients)
-            
-        except Exception as e:
-            print(f"Local generation error: {e}")
-            return self._mock_generate(ingredients, cuisine_type, dietary_restrictions, cooking_time)
+            if self._is_garbage_output(generated_text):
+                if attempt < max_attempts - 1:
+                    print(f"Detected garbage output, retrying (attempt {attempt + 2})...")
+                    continue
+            break
+        
+        # Parse the recipe and enhance if needed
+        recipe = self._parse_recipe(generated_text, ingredients)
+        
+        # Ensure we have good formatted ingredients with quantities
+        if not recipe['ingredients'] or len(recipe['ingredients']) < len(ingredients):
+            recipe['ingredients'] = self._format_ingredients_with_quantities(ingredients)
+        
+        if not recipe['instructions']:
+            recipe['instructions'] = self._generate_basic_instructions(ingredients)
+        
+        if not recipe['cooking_time']:
+            recipe['cooking_time'] = self._estimate_cooking_time(ingredients)
+        if not recipe['servings']:
+            recipe['servings'] = '4 servings'
+        
+        return recipe
+    
+    def _is_garbage_output(self, text: str) -> bool:
+        import re
+        
+        words = text.lower().split()
+        if len(words) < 20:
+            return False
+        
+        from collections import Counter
+        word_counts = Counter(words)
+        most_common_count = word_counts.most_common(1)[0][1] if word_counts else 0
+        
+        if most_common_count > len(words) * 0.2:
+            return True
+        
+        pattern = r'(\b\w+\s+\w+\s+\w+\b)(?:.*?\1){5,}'
+        if re.search(pattern, text.lower()):
+            return True
+        
+        return False
+    
+    def _generate_basic_instructions(self, ingredients: List[str]) -> List[str]:
+        instructions = []
+        ing_str = ", ".join(ingredients[:-1]) + " and " + ingredients[-1] if len(ingredients) > 1 else ingredients[0]
+        
+        instructions.append(f"Step 1: Gather and prepare all ingredients: {ing_str}.")
+        instructions.append("Step 2: Wash and chop vegetables as needed.")
+        
+        proteins = {'chicken', 'beef', 'pork', 'fish', 'shrimp', 'meat', 'bacon', 'sausage'}
+        if any(p in ing.lower() for ing in ingredients for p in proteins):
+            instructions.append("Step 3: Cook the protein in a pan over medium-high heat until done.")
+            instructions.append("Step 4: Combine all ingredients together.")
+            instructions.append("Step 5: Season to taste with salt and pepper. Serve warm.")
+        else:
+            instructions.append("Step 3: Combine all ingredients together in a bowl or pan.")
+            instructions.append("Step 4: Cook or mix as appropriate for the dish.")
+            instructions.append("Step 5: Season to taste and serve.")
+        
+        return instructions
+
+    def _format_ingredients_with_quantities(self, ingredients: List[str]) -> List[str]:
+        formatted = []
+        for ing in ingredients:
+            ing_lower = ing.lower().strip()
+            if ing_lower in self.DEFAULT_QUANTITIES:
+                formatted.append(self.DEFAULT_QUANTITIES[ing_lower])
+            else:
+                formatted.append(f"1 cup {ing}")
+        return formatted
+    
+    def _estimate_cooking_time(self, ingredients: List[str]) -> str:
+        ing_set = set(ing.lower() for ing in ingredients)
+        
+        if ing_set & {'beef', 'pork', 'lamb', 'chicken'}:
+            return '30-45 minutes'
+        elif ing_set & {'fish', 'shrimp'}:
+            return '15-20 minutes'
+        elif ing_set & {'pasta', 'rice', 'noodles'}:
+            return '20-25 minutes'
+        elif ing_set & {'egg', 'eggs', 'bread'}:
+            return '10-15 minutes'
+        else:
+            return '20-30 minutes'
     
     def _parse_recipe(self, generated_text: str, ingredients: List[str]) -> Dict:
-        """Parse the generated text into a structured recipe"""
-        
-        # Try to extract sections from the generated text
-        lines = generated_text.strip().split('\n')
         
         recipe = {
             'name': '',
@@ -251,6 +333,93 @@ Recipe:"""
             'raw_text': generated_text
         }
         
+        text = generated_text.strip()
+        
+        if 'title:' in text.lower() and 'directions:' in text.lower():
+            import re
+            
+            title_match = text.lower().find('title:')
+            ingredients_match = text.lower().find('ingredients:')
+            directions_match = text.lower().find('directions:')
+            
+            if title_match != -1 and ingredients_match != -1:
+                name = text[title_match + 6:ingredients_match].strip()
+                recipe['name'] = name.title()
+            
+            if ingredients_match != -1 and directions_match != -1:
+                ingredients_text = text[ingredients_match + 12:directions_match].strip()
+                ingredients_text = re.sub(r'^ingredients\s*', '', ingredients_text, flags=re.IGNORECASE)
+                
+                ingredient_pattern = r'(\d+(?:/\d+)?\s*(?:cup|cups|c\.|tbsp|tsp|teaspoon|tablespoon|lb|lbs|pound|pounds|oz|ounce|ounces|slice|slices|piece|pieces|clove|cloves|head|heads|can|cans|pkg|package|bunch|pinch)?\s*\.?\s*[^\d]+?)(?=\d|$)'
+                parsed_ingredients = re.findall(ingredient_pattern, ingredients_text, re.IGNORECASE)
+                
+                if parsed_ingredients:
+                    seen = set()
+                    for item in parsed_ingredients:
+                        item = item.strip().strip(',').strip('.')
+                        if item and len(item) > 2 and item.lower() not in seen:
+                            words = item.split()
+                            unit_words = {'cup', 'cups', 'c', 'tbsp', 'tsp', 'teaspoon', 'tablespoon', 
+                                         'lb', 'lbs', 'pound', 'pounds', 'oz', 'ounce', 'ounces',
+                                         'slice', 'slices', 'piece', 'pieces', 'inch', 'small', 
+                                         'medium', 'large', 'clove', 'cloves', 'head', 'heads', 
+                                         'can', 'cans', 'pkg', 'package', 'bunch', 'pinch',
+                                         'chopped', 'diced', 'sliced', 'minced', 'crushed', 'fresh',
+                                         'dried', 'ground', 'whole', 'cut', 'cubed'}
+                            has_ingredient_name = any(
+                                len(w) >= 3 and w.lower() not in unit_words and not w.replace('/', '').replace('.', '').isdigit()
+                                for w in words
+                            )
+                            if has_ingredient_name:
+                                seen.add(item.lower())
+                                recipe['ingredients'].append(item)
+                else:
+                    seen = set()
+                    for item in ingredients_text.replace(' . ', ', ').split(','):
+                        item = item.strip().strip('.')
+                        if item and len(item) > 2 and item.lower() not in seen:
+                            seen.add(item.lower())
+                            recipe['ingredients'].append(item)
+            
+            if directions_match != -1:
+                directions_text = text[directions_match + 11:].strip()
+                directions_text = re.sub(r'^directions\s*', '', directions_text, flags=re.IGNORECASE)
+                
+                steps = re.split(r'(?:\d+\.\s*)', directions_text)
+                
+                if len(steps) <= 1 and directions_text:
+                    steps = re.split(r'\.\s+', directions_text)
+                
+                step_num = 1
+                for step in steps:
+                    step = step.strip()
+                    if step and len(step) > 5:
+                        if not step.endswith('.'):
+                            step += '.'
+                        step = step[0].upper() + step[1:] if len(step) > 1 else step.upper()
+                        recipe['instructions'].append(f"Step {step_num}: {step}")
+                        step_num += 1
+            
+            if directions_text:
+                time_match = re.search(r'(\d+)\s*(?:to\s*(\d+)\s*)?minutes', directions_text.lower())
+                if time_match:
+                    if time_match.group(2):
+                        recipe['cooking_time'] = f"{time_match.group(1)}-{time_match.group(2)} minutes"
+                    else:
+                        recipe['cooking_time'] = f"{time_match.group(1)} minutes"
+                        
+                hour_match = re.search(r'(\d+)\s*hours?', directions_text.lower())
+                if hour_match:
+                    recipe['cooking_time'] = f"{hour_match.group(1)} hour(s)"
+            
+            if not recipe['cooking_time']:
+                recipe['cooking_time'] = "15-20 minutes"
+            if not recipe['servings']:
+                recipe['servings'] = "2-4 servings"
+            
+            return recipe
+        
+        lines = text.split('\n')
         current_section = None
         
         for line in lines:
@@ -260,7 +429,6 @@ Recipe:"""
             
             lower_line = line.lower()
             
-            # Detect sections
             if 'recipe name' in lower_line or (not recipe['name'] and len(line) < 100):
                 recipe['name'] = line.replace('Recipe name:', '').replace('Recipe Name:', '').strip()
             elif 'ingredient' in lower_line:
@@ -282,11 +450,9 @@ Recipe:"""
             elif current_section == 'tips':
                 recipe['tips'] += line + ' '
         
-        # Set default name if not found
         if not recipe['name']:
             recipe['name'] = f"Dish with {', '.join(ingredients[:3])}"
         
-        # Add original ingredients if none were parsed
         if not recipe['ingredients']:
             recipe['ingredients'] = ingredients
         
@@ -296,15 +462,8 @@ Recipe:"""
                        cuisine_type: Optional[str] = None,
                        dietary_restrictions: Optional[List[str]] = None,
                        cooking_time: Optional[int] = None) -> Dict:
-        """
-        Generate a mock recipe for testing
-        This provides realistic recipe suggestions without requiring the LLM
-        """
-        
-        # Normalize ingredients to lowercase for matching
         ingredient_set = set(ing.lower() for ing in ingredients)
         
-        # Check for tomato + egg + onion combination first (most specific)
         if 'tomato' in ingredient_set and 'egg' in ingredient_set and 'onion' in ingredient_set:
             return {
                 'name': 'Tomato Egg and Onion Stir-Fry',
@@ -336,7 +495,6 @@ Recipe:"""
                 'tips': 'The onions add a nice sweetness that complements the tangy tomatoes. For extra flavor, you can add a splash of sesame oil at the end. The key is to not overcook the eggs - they should be soft and fluffy.'
             }
         
-        # Check for tomato + egg combination
         if 'tomato' in ingredient_set and 'egg' in ingredient_set:
             return {
                 'name': 'Classic Tomato and Egg Stir-Fry',
@@ -363,7 +521,6 @@ Recipe:"""
                 'tips': 'The key is to not overcook the eggs - they should be soft and fluffy. Adding a bit of sugar helps balance the acidity of the tomatoes.'
             }
         
-        # Check for chicken + garlic combination
         if 'chicken' in ingredient_set and 'garlic' in ingredient_set:
             return {
                 'name': 'Garlic Butter Chicken',
@@ -391,7 +548,6 @@ Recipe:"""
                 'tips': 'Let the chicken rest for 5 minutes before serving for juicier results. Serve with mashed potatoes or rice to soak up the delicious garlic butter sauce.'
             }
         
-        # Check for potato + lemon combination
         if 'potato' in ingredient_set and 'lemon' in ingredient_set:
             return {
                 'name': 'Lemon Herb Roasted Potatoes',
@@ -421,7 +577,6 @@ Recipe:"""
                 'tips': 'For extra crispy potatoes, make sure they are dry before tossing with oil. Do not overcrowd the baking sheet - use two sheets if needed.'
             }
         
-        # Check for potato only
         if 'potato' in ingredient_set:
             return {
                 'name': 'Crispy Herb Roasted Potatoes',
@@ -449,7 +604,6 @@ Recipe:"""
                 'tips': 'Parboiling the potatoes for 5 minutes before roasting makes them extra fluffy inside and crispy outside.'
             }
         
-        # Check for lemon + chicken combination
         if 'lemon' in ingredient_set and 'chicken' in ingredient_set:
             return {
                 'name': 'Lemon Garlic Chicken',
@@ -478,7 +632,6 @@ Recipe:"""
                 'tips': 'Use fresh lemon juice for the best flavor. The pan sauce is delicious over rice or mashed potatoes.'
             }
         
-        # Check for lemon only (for fish or salad dressing)
         if 'lemon' in ingredient_set:
             return {
                 'name': 'Lemon Vinaigrette Salad',
@@ -505,7 +658,6 @@ Recipe:"""
                 'tips': 'This dressing keeps in the refrigerator for up to a week. Bring to room temperature and shake well before using.'
             }
         
-        # Check for egg + onion combination
         if 'egg' in ingredient_set and 'onion' in ingredient_set:
             return {
                 'name': 'Caramelized Onion Omelette',
@@ -561,21 +713,10 @@ Recipe:"""
 
 
 class RecipeGeneratorWithRAG(RecipeGenerator):
-    """
-    Extended Recipe Generator with Retrieval-Augmented Generation (RAG)
-    
-    Uses a recipe database to enhance LLM generation with relevant
-    example recipes and techniques.
-    """
+ 
     
     def __init__(self, recipe_database_path: str = None, **kwargs):
-        """
-        Initialize RAG-enhanced recipe generator
-        
-        Args:
-            recipe_database_path: Path to recipe database (JSON or SQLite)
-            **kwargs: Additional arguments for base RecipeGenerator
-        """
+
         super().__init__(**kwargs)
         self.recipe_db = None
         
@@ -583,7 +724,6 @@ class RecipeGeneratorWithRAG(RecipeGenerator):
             self._load_recipe_database(recipe_database_path)
     
     def _load_recipe_database(self, path: str):
-        """Load recipe database for RAG"""
         try:
             import json
             with open(path, 'r') as f:
@@ -594,7 +734,6 @@ class RecipeGeneratorWithRAG(RecipeGenerator):
             self.recipe_db = []
     
     def _find_similar_recipes(self, ingredients: List[str], top_k: int = 3) -> List[Dict]:
-        """Find similar recipes from the database based on ingredients"""
         if not self.recipe_db:
             return []
         
@@ -603,24 +742,18 @@ class RecipeGeneratorWithRAG(RecipeGenerator):
         
         for recipe in self.recipe_db:
             recipe_ingredients = set(ing.lower() for ing in recipe.get('ingredients', []))
-            # Calculate Jaccard similarity
             intersection = len(ingredient_set & recipe_ingredients)
             union = len(ingredient_set | recipe_ingredients)
             score = intersection / union if union > 0 else 0
             scored_recipes.append((score, recipe))
         
-        # Sort by score and return top_k
         scored_recipes.sort(key=lambda x: x[0], reverse=True)
         return [r[1] for r in scored_recipes[:top_k]]
     
     def generate(self, ingredients: List[str], **kwargs) -> Dict:
-        """Generate recipe with RAG enhancement"""
-        # Find similar recipes
         similar_recipes = self._find_similar_recipes(ingredients)
         
-        # Build enhanced prompt with examples
         if similar_recipes:
-            # Add context from similar recipes to the prompt
             kwargs['context_recipes'] = similar_recipes
         
         return super().generate(ingredients, **kwargs)

@@ -1,8 +1,3 @@
-"""
-Food Ingredient Recognition and Recipe Generation API
-Main Flask application that orchestrates image recognition and recipe generation
-"""
-
 from flask import Flask, request, jsonify, send_from_directory
 from flask_cors import CORS
 import os
@@ -48,17 +43,14 @@ def allowed_file(filename):
 
 @app.route('/')
 def index():
-    """Serve the frontend"""
     return send_from_directory('../frontend', 'index.html')
 
 @app.route('/<path:path>')
 def serve_static(path):
-    """Serve static files"""
     return send_from_directory('../frontend', path)
 
 @app.route('/api/health', methods=['GET'])
 def health_check():
-    """Health check endpoint"""
     return jsonify({
         'status': 'healthy',
         'message': 'Food Recipe API is running'
@@ -66,10 +58,7 @@ def health_check():
 
 @app.route('/api/detect', methods=['POST'])
 def detect_ingredients():
-    """
-    Detect food ingredients in an uploaded image
-    Returns: List of detected ingredients with confidence scores
-    """
+    
     if 'image' not in request.files:
         return jsonify({'error': 'No image file provided'}), 400
     
@@ -105,30 +94,6 @@ def detect_ingredients():
 
 @app.route('/api/generate-recipe', methods=['POST'])
 def generate_recipe():
-    '''
-You are a helpful cooking assistant. Based on the provided ingredients detected from an image, suggest a delicious and easy-to-make recipe.
-
-Always available pantry staples (you can use these freely): salt, black pepper, cooking oil, water
-
-
-Please provide:
-1. **Recipe name** as a heading
-2. **Ingredients** - Use a simple bullet list (one ingredient per line with a dash or bullet). Do NOT use tables. Quantities should be for $servingText.
-3. **Instructions** - Numbered step-by-step cooking instructions
-4. **Cooking time** and **Serving size** (should be $servingText)
-
-IMPORTANT FORMATTING RULES:
-- Do NOT use tables or markdown tables at all
-- Use simple bullet points (- or •) for ingredient lists
-- Keep lines short and mobile-friendly
-- Use **bold** for section headers
-- Use numbered lists for steps
-- Use METRIC/EUROPEAN units only: grams (g), kilograms (kg), milliliters (ml), liters (L), centimeters (cm)
-- Do NOT use cups, ounces, pounds, tablespoons, teaspoons, or other imperial units
-- For small amounts, use grams or ml (e.g., "5g salt" instead of "1 tsp salt", "15ml oil" instead of "1 tbsp oil")
-
-Make the recipe practical and suitable for home cooking. If the detected ingredients are limited, suggest a simple recipe that primarily uses those ingredients with minimal additional items.
-''';
     data = request.get_json()
     
     if not data or 'ingredients' not in data:
@@ -153,9 +118,7 @@ Make the recipe practical and suitable for home cooking. If the detected ingredi
 
 @app.route('/api/analyze', methods=['POST'])
 def analyze_and_generate():
-    """
-    Combined endpoint: detect ingredients from image and generate recipe
-    """
+
     if 'image' not in request.files:
         return jsonify({'error': 'No image file provided'}), 400
     
@@ -203,5 +166,5 @@ def analyze_and_generate():
 
 if __name__ == '__main__':
     print("Starting Food Recipe API...")
-    print("Make sure you have downloaded the MMDetection model weights!")
+    print("Using CLIP model for food ingredient detection (111 ingredients)")
     app.run(debug=True, host='0.0.0.0', port=5000)

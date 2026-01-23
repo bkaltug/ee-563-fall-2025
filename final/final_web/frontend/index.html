@@ -11,7 +11,6 @@
 </head>
 <body>
     <div class="container">
-        <!-- Header -->
         <header class="header">
             <div class="logo">
                 <span class="logo-icon">🍳</span>
@@ -20,9 +19,7 @@
             <p class="tagline">Upload a photo of your ingredients and get personalized recipes!</p>
         </header>
 
-        <!-- Main Content -->
         <main class="main-content">
-            <!-- Upload Section -->
             <section class="upload-section">
                 <div class="upload-container" id="uploadContainer">
                     <div class="upload-area" id="uploadArea">
@@ -45,22 +42,19 @@
                 </div>
             </section>
 
-            <!-- Loading Spinner -->
             <div class="loading-overlay" id="loadingOverlay">
                 <div class="spinner"></div>
                 <p class="loading-text" id="loadingText">Analyzing your image...</p>
             </div>
 
-            <!-- Results Section -->
             <section class="results-section" id="resultsSection" style="display: none;">
-                <!-- Detected Ingredients -->
                 <div class="ingredients-panel">
                     <h2>
                         <span class="section-icon">🥗</span>
                         Detected Ingredients
                     </h2>
                     <div class="ingredients-list" id="ingredientsList">
-                        <!-- Ingredients will be inserted here -->
+
                     </div>
                     <div class="ingredients-actions">
                         <button class="edit-btn" id="editIngredientsBtn">
@@ -72,12 +66,11 @@
                     </div>
                 </div>
 
-                <!-- Edit Ingredients Modal -->
                 <div class="edit-modal" id="editModal" style="display: none;">
                     <div class="modal-content">
                         <h3>Edit Ingredients</h3>
                         <div class="edit-ingredients-container" id="editIngredientsContainer">
-                            <!-- Editable ingredients will be inserted here -->
+
                         </div>
                         <div class="add-ingredient">
                             <input type="text" id="newIngredientInput" placeholder="Add new ingredient...">
@@ -90,14 +83,13 @@
                     </div>
                 </div>
 
-                <!-- Recipe Display -->
                 <div class="recipe-panel" id="recipePanel" style="display: none;">
                     <h2>
                         <span class="section-icon">📖</span>
                         Your Recipe
                     </h2>
                     <div class="recipe-content" id="recipeContent">
-                        <!-- Recipe will be inserted here -->
+
                     </div>
                     <div class="recipe-actions">
                         <button class="print-btn" id="printRecipeBtn">
@@ -114,9 +106,8 @@
             </section>
         </main>
 
-        <!-- Footer -->
         <footer class="footer">
-            <p>Powered by MMDetection & HuggingFace 🤗</p>
+            <p>Powered by CLIP & HuggingFace 🤗</p>
             <p class="copyright">© 2024 AI Recipe Generator</p>
         </footer>
     </div>

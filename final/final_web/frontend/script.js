@@ -1,8 +1,3 @@
-/**
- * AI Recipe Generator - Main JavaScript
- * Handles image upload, API communication, and UI interactions
- */
-
 // Configuration
 const API_BASE_URL = 'http://localhost:5000/api';
 
